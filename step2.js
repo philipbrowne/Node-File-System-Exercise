@@ -1,18 +1,14 @@
 const fs = require('fs');
 const axios = require('axios');
+const process = require('process');
 
-let path;
-if (process.argv[2]) {
-  path = process.argv[2];
-} else {
-  path = null;
-}
+let path = process.argv[2];
 
 function cat(path) {
   fs.readFile(path, 'utf8', (err, data) => {
     if (err) {
       console.error('ERROR: ', err.message);
-      process.kill(1);
+      process.exit(1);
     } else {
       console.log(data);
     }
@@ -28,8 +24,13 @@ async function webCat(path) {
   }
 }
 
-if (path.startsWith('http')) {
-  webCat(path);
+if (process.argv[2]) {
+  if (path.startsWith('http')) {
+    webCat(path);
+  } else {
+    cat(path);
+  }
 } else {
-  cat(path);
+  console.error('Please add something to read');
+  process.exit(1);
 }

@@ -1,23 +1,30 @@
 const fs = require('fs');
 const axios = require('axios');
+const process = require('process');
+let args = [];
+let paths = [];
+let contents = [];
 let path;
-let contents;
 
 if (process.argv[2] && process.argv[2] !== '--out') {
   path = process.argv[2];
-} else if (process.argv[2] && process.argv[2] === '--out') {
-  if (process.argv[3]) {
-    path = process.argv[3];
-    if (process.argv[4]) {
-      contents = process.argv[4];
-    } else {
-      console.error('Please add contents to output');
-    }
+} else if (process.argv[2] === '--out') {
+  args = process.argv.slice(3);
+  if (args.length % 2 !== 0) {
+    console.error('Missing required arguments');
+    process.exit(1);
   } else {
-    console.error('Please add a path');
+    for (let i = 0; i < args.length; i++) {
+      if (i % 2 == 0) {
+        paths.push(args[i]);
+      } else {
+        contents.push(args[i]);
+      }
+    }
   }
 } else {
-  path = null;
+  console.error('Please insert arguments');
+  process.exit(1);
 }
 
 function cat(path) {
@@ -41,12 +48,17 @@ async function webCat(path) {
 }
 
 if (process.argv[2] === '--out') {
-  if (process.argv.length < 5) {
+  if (paths.length === 0) {
     console.error('Please add an output file and contents');
-  } else if (contents.startsWith('http')) {
-    webCatWrite(path, contents);
+    process.exit[1];
   } else {
-    catWrite(path, contents);
+    for (let i = 0; i < args.length / 2; i++) {
+      if (contents[i].startsWith('http')) {
+        webCatWrite(paths[i], contents[i]);
+      } else {
+        catWrite(paths[i], contents[i]);
+      }
+    }
   }
 }
 
@@ -54,26 +66,28 @@ function catWrite(path, contents) {
   fs.readFile(contents, 'utf8', (err, data) => {
     if (err) {
       console.error(err.message);
+      process.kill(1);
     } else {
-      fs.writeFile(path, data, 'utf8', (err) => {
-        if (err) {
-          console.error(err.message);
-          process.kill(1);
-        } else {
-        }
-      });
+      writeFile(path, data);
     }
   });
 }
 
 async function webCatWrite(path, contents) {
-  let res = await axios.get(contents);
-  contents = res.data;
+  try {
+    let res = await axios.get(contents);
+    writeFile(path, res.data);
+  } catch (e) {
+    console.error(e);
+    process.kill(1);
+  }
+}
+
+function writeFile(path, contents) {
   fs.writeFile(path, contents, 'utf8', (err) => {
     if (err) {
       console.error(err.message);
       process.kill(1);
-    } else {
     }
   });
 }

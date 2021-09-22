@@ -1,21 +1,20 @@
-let path;
-if (process.argv[2]) {
-  path = process.argv[2];
-} else {
-  path = null;
-}
-
 const fs = require('fs');
+const process = require('process');
 
 function cat(path) {
   fs.readFile(path, 'utf8', (err, data) => {
     if (err) {
       console.error('ERROR: ', err.message);
-      process.kill(1);
+      process.exit(1);
     } else {
       console.log(data);
     }
   });
 }
 
-cat(path);
+if (process.argv[2]) {
+  cat(process.argv[2]);
+} else {
+  console.error('Please add something to read');
+  process.exit(1);
+}
